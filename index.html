@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequencing Animations Dashboard</title>
+    <style>
+        /* Modern dark UI styling with gold accents */
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            height: 100vh;
+            background-color: #000000; /* Black background */
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+        }
+
+        /* Gold-accented boxes */
+        .alice-container {
+            width: 140px;
+            height: 140px;
+            background-color: #111111;
+            color: #D4AF37; /* Metallic Gold Text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            border: 2px solid #D4AF37; /* Gold Border */
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2); /* Soft Gold Glow */
+            transition: transform 0.2s ease;
+        }
+
+        /* Interactive Control Button */
+        #controlBtn {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #000000;
+            background-color: #D4AF37; /* Gold Button */
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        #controlBtn:hover {
+            background-color: #FFF;
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #controlBtn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <button id="controlBtn">Start Sequence</button>
+
+    <div class="container">
+        <div id="alice1" class="alice-container">Box 1</div>
+        <div id="alice2" class="alice-container">Box 2</div>
+        <div id="alice3" class="alice-container">Box 3</div>
+    </div>
+
+    <script>
+        // 1. Unique Keyframe Sets for each box
+        const box1Keyframes = [
+            { transform: "rotate(0) scale(1)" },
+            { transform: "rotate(360deg) scale(0)" }
+        ];
+
+        const box2Keyframes = [
+            { opacity: 1, transform: "translateY(0)" },
+            { opacity: 0, transform: "translateY(100px)" }
+        ];
+
+        const box3Keyframes = [
+            { transform: "perspective(400px) rotateY(0deg)", borderColor: "#D4AF37" },
+            { transform: "perspective(400px) rotateY(180deg)", borderColor: "#FFFFFF" }
+        ];
+
+        const boxTiming = {
+            duration: 1500,
+            iterations: 1,
+            fill: "forwards"
+        };
+
+        // 2. Select Elements
+        const box1 = document.querySelector("#alice1");
+        const box2 = document.querySelector("#alice2");
+        const box3 = document.querySelector("#alice3");
+        const controlBtn = document.querySelector("#controlBtn");
+
+        // Keep track of active animation references to allow interrupting them
+        let activeAnimations = [];
+        let isRunning = false;
+
+        // 3. Sequential Controller Logic
+        async function runSequence() {
+            isRunning = true;
+            controlBtn.textContent = "Reset Sequence";
+            activeAnimations = [];
+
+            try {
+                // Play and track Box 1
+                const anim1 = box1.animate(box1Keyframes, boxTiming);
+                activeAnimations.push(anim1);
+                await anim1.finished;
+
+                // Play and track Box 2
+                const anim2 = box2.animate(box2Keyframes, boxTiming);
+                activeAnimations.push(anim2);
+                await anim2.finished;
+
+                // Play and track Box 3
+                const anim3 = box3.animate(box3Keyframes, boxTiming);
+                activeAnimations.push(anim3);
+                await anim3.finished;
+
+            } catch (error) {
+                // Safe handling when animations are explicitly .cancel()'ed on Reset
+                console.log("Animation sequence interrupted or reset.");
+            }
+        }
+
+        function resetSequence() {
+            isRunning = false;
+            controlBtn.textContent = "Start Sequence";
+
+            // Cancel any actively running Web Animations API instances
+            activeAnimations.forEach(anim => anim.cancel());
+            activeAnimations = [];
+
+            // Explicitly force elements back to their base visual state
+            [box1, box2, box3].forEach(box => {
+                box.getAnimations().forEach(anim => anim.cancel());
+            });
+        }
+
+        // 4. Global Button Event Listener
+        controlBtn.addEventListener("click", () => {
+            if (!isRunning) {
+                runSequence();
+            } else {
+                resetSequence();
+            }
+        });
+    </script>
+</body>
+</html>
